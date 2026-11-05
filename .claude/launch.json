@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mockups",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/serve.mjs", "4173"],
+      "port": 4173
+    },
+    {
+      "name": "wp-playground",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/playground.mjs", "9400"],
+      "port": 9400
+    }
+  ]
+}

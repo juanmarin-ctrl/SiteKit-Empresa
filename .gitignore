@@ -1,0 +1,31 @@
+# --- Proyectos de clientes: no se suben al repo compartido ---
+# (Si tu equipo quiere versionarlos, hazlo en un fork y borra estas dos líneas.)
+proyectos/*/
+!proyectos/_plantilla-proyecto/
+
+# Bandeja de entrada de briefs
+brief/entrada/*
+!brief/entrada/.gitkeep
+
+# Payload activo del motor: se versiona solo el placeholder.
+# Para evitar subir por error el payload de un cliente, después del primer clone ejecuta:
+#   git update-index --skip-worktree engine/site-maestro/payload/site.json engine/site-maestro/payload/branding.css engine/site-maestro/payload/frontend.js engine/site-maestro/payload/README.md
+# (tools/setup.mjs lo hace por ti)
+engine/site-maestro/payload/media/brand/*
+engine/site-maestro/payload/media/stock/*
+engine/site-maestro/payload/templates/*
+!engine/site-maestro/payload/**/.gitkeep
+
+# Salidas
+*.zip
+dist/
+tools/wp-playground/.blueprint.generated.json
+.taste-skill/
+.impeccable/
+node_modules/
+
+# Locales de cada persona
+.claude/settings.local.json
+TeducasCore/
+.DS_Store
+Thumbs.db
