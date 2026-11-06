@@ -15,32 +15,48 @@
     "mood": "",
     "anti_template_ack": false
   },
+  "requires": ["woocommerce", "tutor"],
   "media_token": "__SITE_MEDIA__",
   "header_template": "header.json",
   "footer_template": "footer.json",
+  "course_template": "curso.json",
+  "commerce": {
+    "engine": "woocommerce",
+    "currency": "USD",
+    "gateways": []
+  },
   "pages": [
-    {
-      "title": "Inicio",
-      "slug": "inicio",
-      "template": "inicio.json",
-      "is_front": true
-    },
-    {
-      "title": "Contacto",
-      "slug": "contacto",
-      "template": "contacto.json"
-    },
-    {
-      "title": "Blog",
-      "slug": "blog",
-      "template": null,
-      "is_blog": true
-    }
+    { "role": "inicio",      "title": "Inicio",                 "slug": "inicio",                 "template": "inicio.json", "is_front": true },
+    { "role": "cursos",      "title": "Cursos",                 "slug": "cursos",                 "template": "cursos.json" },
+    { "role": "nosotros",    "title": "Sobre nosotros",         "slug": "sobre-nosotros",         "template": "nosotros.json" },
+    { "role": "blog",        "title": "Blog",                   "slug": "blog",                   "template": null, "is_blog": true },
+    { "role": "contacto",    "title": "Contáctame",             "slug": "contacto",               "template": "contacto.json" },
+    { "role": "privacidad",  "title": "Política de privacidad", "slug": "politica-de-privacidad", "template": "privacidad.json", "legal": true },
+    { "role": "terminos",    "title": "Términos y condiciones", "slug": "terminos-y-condiciones", "template": "terminos.json", "legal": true },
+    { "role": "reembolsos",  "title": "Política de reembolsos", "slug": "politica-de-reembolsos", "template": "reembolsos.json", "legal": true },
+    { "role": "cookies",     "title": "Política de cookies",    "slug": "politica-de-cookies",    "template": "cookies.json", "legal": true },
+    { "role": "aviso-legal", "title": "Aviso legal",            "slug": "aviso-legal",            "template": "aviso-legal.json", "legal": true },
+    { "role": "faq",         "title": "Preguntas frecuentes",   "slug": "preguntas-frecuentes",   "template": "faq.json" },
+    { "role": "carrito",     "title": "Carrito",                "slug": "carrito",                "template": "carrito.json" },
+    { "role": "checkout",    "title": "Pasarela de pagos",      "slug": "finalizar-compra",       "template": "checkout.json" }
   ],
   "menus": {
-    "primary": ["Inicio", "Contacto", "Blog"],
-    "legal": []
+    "primary": ["Inicio", "Cursos", "Sobre nosotros", "Blog", "Contáctame"],
+    "legal": ["Política de privacidad", "Términos y condiciones", "Política de reembolsos", "Política de cookies", "Aviso legal", "Preguntas frecuentes"]
   },
+  "courses": [
+    {
+      "title": "Curso demo — REEMPLAZAR",
+      "slug": "curso-demo",
+      "excerpt": "TODO-CLIENTE: promesa del curso en una frase.",
+      "content": "<p>TODO-CLIENTE: descripción del curso.</p>",
+      "price": 0,
+      "level": "all_levels",
+      "topics": [
+        { "title": "Módulo 1", "lessons": ["Lección 1", "Lección 2"] }
+      ]
+    }
+  ],
   "posts": [],
   "assets": {
     "css": "branding.css",

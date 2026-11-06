@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "mockups",
+      "name": "previews",
       "runtimeExecutable": "node",
       "runtimeArgs": ["tools/serve.mjs", "4173"],
       "port": 4173

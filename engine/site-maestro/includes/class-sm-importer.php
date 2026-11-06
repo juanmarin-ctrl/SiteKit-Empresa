@@ -13,6 +13,7 @@ class SM_Importer {
 	private $template_ids = array();
 	private $template_content = array();
 	private $page_ids = array();
+	private $role_ids = array();
 	private $log_lines = array();
 	private $media_token = '__SITE_MEDIA__';
 
@@ -55,8 +56,17 @@ class SM_Importer {
 		$this->log('Elementor: ' . (defined('ELEMENTOR_VERSION') ? ELEMENTOR_VERSION : 'NO'));
 		$this->log('Elementor Pro: ' . (class_exists('\\ElementorPro\\Plugin') ? 'SI' : 'NO'));
 
-		if (in_array('elementor-pro', isset($this->site['requires']) ? (array) $this->site['requires'] : array(), true) && !class_exists('\\ElementorPro\\Plugin')) {
+		$requires = isset($this->site['requires']) ? (array) $this->site['requires'] : array();
+		if (in_array('elementor-pro', $requires, true) && !class_exists('\\ElementorPro\\Plugin')) {
 			$this->log('ERROR: este sitio usa widgets de Elementor Pro (Nav Menu, Formulario). Activa Elementor Pro y vuelve a instalar.');
+		}
+		$this->log('WooCommerce: ' . (class_exists('WooCommerce') ? 'SI' : 'NO'));
+		$this->log('Tutor LMS: ' . ($this->tutor_active() ? 'SI' : 'NO'));
+		if (in_array('woocommerce', $requires, true) && !class_exists('WooCommerce')) {
+			$this->log('ERROR: falta WooCommerce (carrito y pasarela de pagos). Instálalo y vuelve a instalar el sitio.');
+		}
+		if (in_array('tutor', $requires, true) && !$this->tutor_active()) {
+			$this->log('ERROR: falta Tutor LMS (cursos y landing de curso). Instálalo y vuelve a instalar el sitio.');
 		}
 
 		$this->bootstrap_wp_files();
@@ -66,8 +76,10 @@ class SM_Importer {
 		$templates = $this->import_templates();
 		$pages = $this->create_pages();
 		$posts = $this->create_posts();
+		$courses = $this->create_courses();
 		$this->create_menus();
 		$this->configure_reading();
+		$this->configure_system_pages();
 		$this->configure_site_identity();
 		$this->assign_header_footer();
 		$runtime = $this->deploy_runtime();
@@ -82,9 +94,62 @@ class SM_Importer {
 			'templates' => $templates,
 			'pages' => $pages,
 			'posts' => $posts,
+			'courses' => $courses,
 			'runtime' => $runtime,
 			'log' => $this->log_lines,
 		);
+	}
+
+	private function tutor_active() {
+		return defined('TUTOR_VERSION') || function_exists('tutor');
+	}
+
+	private function commerce_engine() {
+		$engine = isset($this->site['commerce']['engine']) ? (string) $this->site['commerce']['engine'] : 'woocommerce';
+		return in_array($engine, array('woocommerce', 'tutor'), true) ? $engine : 'woocommerce';
+	}
+
+	/** Shortcode que debe contener cada página de sistema según su role. */
+	private function role_shortcode($role) {
+		$woo = $this->commerce_engine() === 'woocommerce';
+		switch ($role) {
+			case 'carrito':
+				return $woo ? '[woocommerce_cart]' : '[tutor_cart]';
+			case 'checkout':
+				return $woo ? '[woocommerce_checkout]' : '[tutor_checkout]';
+			case 'cursos':
+				return '[tutor_course]';
+		}
+		return '';
+	}
+
+	/** Si la plantilla no incluye el shortcode/widget del sistema, añade un widget Shortcode al final del contenido. */
+	private function ensure_shortcode($content, $shortcode, $title) {
+		if ($shortcode === '') {
+			return $content;
+		}
+		$json = (string) wp_json_encode($content);
+		$tag = trim($shortcode, '[]');
+		if (strpos($json, $tag) !== false || ($tag === 'tutor_course' && strpos($json, 'tutor') !== false)) {
+			return $content;
+		}
+		$prefix = !empty($this->site['brand']['css_prefix']) ? $this->site['brand']['css_prefix'] : 's-site';
+		$content[] = array(
+			'id' => substr(md5($title . $shortcode), 0, 7),
+			'elType' => 'container',
+			'settings' => array('_css_classes' => $prefix . '-system ' . $prefix . '-system--' . sanitize_title($tag)),
+			'elements' => array(
+				array(
+					'id' => substr(md5($shortcode . $title), 0, 7),
+					'elType' => 'widget',
+					'widgetType' => 'shortcode',
+					'settings' => array('shortcode' => $shortcode),
+					'elements' => array(),
+				),
+			),
+		);
+		$this->log("Página '$title': añadido $shortcode");
+		return $content;
 	}
 
 	private function load_site_json() {
@@ -316,6 +381,9 @@ class SM_Importer {
 			$parent = isset($cfg['parent']) ? trim((string) $cfg['parent'], '/') : '';
 			$page_id = $this->upsert_page($title, $slug, $parent);
 			$this->page_ids[$title] = $page_id;
+			if (!empty($cfg['role'])) {
+				$this->role_ids[(string) $cfg['role']] = $page_id;
+			}
 			$count++;
 			$this->log("Página '$title' #$page_id /" . ($parent !== '' ? $parent . '/' : '') . $slug);
 
@@ -339,6 +407,10 @@ class SM_Importer {
 			if (!is_array($content) || empty($content)) {
 				$content = $this->build_placeholder_page($title);
 				$this->log("WARN '$title': sin template → placeholder editable");
+			}
+
+			if (!empty($cfg['role'])) {
+				$content = $this->ensure_shortcode($content, $this->role_shortcode((string) $cfg['role']), $title);
 			}
 
 			if ($embed) {
@@ -553,6 +625,159 @@ class SM_Importer {
 		return $count;
 	}
 
+	/**
+	 * Cursos demo de Tutor LMS (site.json → courses) para poder revisar la landing de curso tras instalar.
+	 * Con WooCommerce y precio > 0 crea además el producto virtual vinculado.
+	 */
+	private function create_courses() {
+		$courses = isset($this->site['courses']) && is_array($this->site['courses']) ? $this->site['courses'] : array();
+		if (!$courses) {
+			return 0;
+		}
+		if (!post_type_exists('courses')) {
+			$this->log('WARN courses: Tutor LMS no está activo → no se crean cursos demo');
+			return 0;
+		}
+		$count = 0;
+		foreach ($courses as $c) {
+			$title = isset($c['title']) ? (string) $c['title'] : '';
+			if ($title === '') {
+				continue;
+			}
+			$slug = !empty($c['slug']) ? (string) $c['slug'] : sanitize_title($title);
+			$existing = get_page_by_path($slug, OBJECT, 'courses');
+			$data = array(
+				'post_title' => $title,
+				'post_name' => $slug,
+				'post_type' => 'courses',
+				'post_status' => 'publish',
+				'post_excerpt' => isset($c['excerpt']) ? (string) $c['excerpt'] : '',
+				'post_content' => isset($c['content']) ? (string) $c['content'] : '',
+			);
+			if ($existing) {
+				$data['ID'] = $existing->ID;
+			}
+			$course_id = (int) ($existing ? wp_update_post($data) : wp_insert_post($data));
+			if (!$course_id) {
+				continue;
+			}
+			if (!empty($c['image']) && !empty($this->media_map[$c['image']])) {
+				set_post_thumbnail($course_id, $this->media_map[$c['image']]);
+			}
+			foreach (array('level' => '_tutor_course_level', 'duration' => '_sm_course_duration') as $key => $meta) {
+				if (!empty($c[$key])) {
+					update_post_meta($course_id, $meta, (string) $c[$key]);
+				}
+			}
+			if (!$existing && !empty($c['topics']) && is_array($c['topics'])) {
+				$order = 1;
+				foreach ($c['topics'] as $topic) {
+					$topic_id = wp_insert_post(array(
+						'post_type' => 'topics',
+						'post_title' => isset($topic['title']) ? (string) $topic['title'] : 'Módulo ' . $order,
+						'post_status' => 'publish',
+						'post_parent' => $course_id,
+						'menu_order' => $order++,
+					));
+					if (!$topic_id || is_wp_error($topic_id)) {
+						continue;
+					}
+					$l_order = 1;
+					foreach ((array) ($topic['lessons'] ?? array()) as $lesson) {
+						wp_insert_post(array(
+							'post_type' => 'lesson',
+							'post_title' => (string) $lesson,
+							'post_status' => 'publish',
+							'post_parent' => $topic_id,
+							'menu_order' => $l_order++,
+						));
+					}
+				}
+			}
+			$price = isset($c['price']) ? (float) $c['price'] : 0;
+			if ($price > 0 && $this->commerce_engine() === 'woocommerce' && class_exists('WC_Product_Simple')) {
+				$product_id = (int) get_post_meta($course_id, '_tutor_course_product_id', true);
+				$product = $product_id ? wc_get_product($product_id) : null;
+				if (!$product) {
+					$product = new WC_Product_Simple();
+				}
+				$product->set_name($title);
+				$product->set_status('publish');
+				$product->set_virtual(true);
+				$product->set_sold_individually(true);
+				$product->set_regular_price((string) $price);
+				if (isset($c['sale_price']) && (float) $c['sale_price'] > 0) {
+					$product->set_sale_price((string) (float) $c['sale_price']);
+				}
+				$product_id = (int) $product->save();
+				update_post_meta($product_id, '_tutor_product', 'yes');
+				update_post_meta($course_id, '_tutor_course_product_id', $product_id);
+				update_post_meta($course_id, '_tutor_course_price_type', 'paid');
+			} elseif ($price > 0 && $this->commerce_engine() === 'tutor') {
+				update_post_meta($course_id, '_tutor_course_price_type', 'paid');
+				update_post_meta($course_id, 'tutor_course_price', $price);
+			} else {
+				update_post_meta($course_id, '_tutor_course_price_type', $price > 0 ? 'paid' : 'free');
+			}
+			$this->log("Curso '$title' #$course_id" . ($price > 0 ? " ($price)" : ' (gratis)'));
+			$count++;
+		}
+		return $count;
+	}
+
+	/**
+	 * Páginas del sistema: privacidad (WP), términos/carrito/checkout (WooCommerce o Tutor) y monetización de Tutor.
+	 */
+	private function configure_system_pages() {
+		$r = $this->role_ids;
+		if (!empty($r['privacidad'])) {
+			update_option('wp_page_for_privacy_policy', $r['privacidad']);
+		}
+		$engine = $this->commerce_engine();
+		if ($engine === 'woocommerce') {
+			if (class_exists('WooCommerce')) {
+				$map = array('carrito' => 'woocommerce_cart_page_id', 'checkout' => 'woocommerce_checkout_page_id', 'terminos' => 'woocommerce_terms_page_id');
+				foreach ($map as $role => $opt) {
+					if (!empty($r[$role])) {
+						update_option($opt, $r[$role]);
+					}
+				}
+				if (!empty($this->site['commerce']['currency'])) {
+					update_option('woocommerce_currency', strtoupper((string) $this->site['commerce']['currency']));
+				}
+				$this->log('WooCommerce: carrito/checkout/términos asignados');
+			} else {
+				$this->log('WARN WooCommerce no activo: carrito y pasarela quedan como páginas con shortcode (se activan al instalar WooCommerce y reinstalar)');
+			}
+		}
+		if ($this->tutor_active()) {
+			$opts = get_option('tutor_option', array());
+			if (!is_array($opts)) {
+				$opts = array();
+			}
+			$opts['monetize_by'] = $engine === 'woocommerce' ? 'wc' : 'tutor';
+			if ($engine === 'tutor') {
+				if (!empty($r['carrito'])) {
+					$opts['tutor_cart_page_id'] = $r['carrito'];
+				}
+				if (!empty($r['checkout'])) {
+					$opts['tutor_checkout_page_id'] = $r['checkout'];
+				}
+			}
+			update_option('tutor_option', $opts);
+			$this->log('Tutor LMS: monetización = ' . $opts['monetize_by'] . ($engine === 'tutor' ? ' (verifica pasarelas en Tutor → Ajustes → Monetización)' : ''));
+		}
+		$missing = array();
+		foreach (array('inicio', 'cursos', 'nosotros', 'blog', 'contacto', 'privacidad', 'terminos', 'reembolsos', 'cookies', 'aviso-legal', 'faq', 'carrito', 'checkout') as $role) {
+			if (empty($r[$role])) {
+				$missing[] = $role;
+			}
+		}
+		if ($missing) {
+			$this->log('WARN páginas obligatorias sin role en site.json: ' . implode(', ', $missing));
+		}
+	}
+
 	private function create_menus() {
 		$menus = isset($this->site['menus']) && is_array($this->site['menus']) ? $this->site['menus'] : array();
 		$project = !empty($this->site['project_id']) ? $this->site['project_id'] : 'site';
@@ -648,6 +873,9 @@ class SM_Importer {
 	private function assign_header_footer() {
 		if (!class_exists('\\ElementorPro\\Plugin')) {
 			$this->log('Header/Footer: Free → embed');
+			if (!empty($this->site['course_template'])) {
+				$this->log('Landing de curso: Elementor Free → la página de curso de Tutor se viste con branding.css (course_template requiere Pro)');
+			}
 			return;
 		}
 		$header_file = !empty($this->site['header_template']) ? $this->site['header_template'] : '';
@@ -696,6 +924,16 @@ class SM_Importer {
 				if ($file !== '' && !empty($this->template_ids[$file])) {
 					$conditions[$this->template_ids[$file]][] = 'include/singular/' . $type . '/' . $post->ID;
 				}
+			}
+		}
+		// Landing de curso individual (Tutor LMS): plantilla single para todos los cursos.
+		$course_file = !empty($this->site['course_template']) ? (string) $this->site['course_template'] : '';
+		if ($course_file !== '') {
+			if (!empty($this->template_ids[$course_file])) {
+				$conditions[$this->template_ids[$course_file]][] = 'include/singular/courses';
+				$this->log('Landing de curso: plantilla #' . $this->template_ids[$course_file] . ' → todos los cursos');
+			} else {
+				$this->log("WARN course_template '$course_file' no está en templates/");
 			}
 		}
 		foreach ($conditions as $tpl_id => $list) {

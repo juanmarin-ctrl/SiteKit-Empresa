@@ -37,7 +37,8 @@ if (process.platform === 'linux') {
 // 2. Skills incluidas
 const skillsDir = join(repo, '.claude', 'skills');
 const skills = existsSync(skillsDir) ? readdirSync(skillsDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name) : [];
-for (const name of ['design-taste-frontend', 'impeccable']) {
+const REQUIRED_SKILLS = ['design-taste-frontend', 'emil-design-eng', 'impeccable', 'wordpress-elementor', 'wordpress-setup', 'wordpress-content'];
+for (const name of REQUIRED_SKILLS) {
   const f = join(skillsDir, name, 'SKILL.md');
   if (!existsSync(f)) { fail(`Skill ${name}`, 'falta .claude/skills/' + name + '/SKILL.md'); continue; }
   const text = readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
@@ -66,19 +67,30 @@ try {
 const ver = (readFileSync(join(repo, 'engine', 'site-maestro', 'site-maestro.php'), 'utf8').match(/Version:\s*([\d.]+)/) || [])[1];
 ver ? ok('Site Maestro', `v${ver}`) : warn('Site Maestro', 'no se pudo leer la versión');
 
-// 4. Git: que el payload activo de un cliente no se suba por error al repo compartido
-if (existsSync(join(repo, '.git'))) {
-  const files = ['site.json', 'branding.css', 'frontend.js', 'README.md'].map((f) => `engine/site-maestro/payload/${f}`);
-  const r = run('git', ['update-index', '--skip-worktree', ...files], { cwd: repo });
-  r.status === 0 ? ok('Git payload', 'skip-worktree activado en el payload placeholder') : warn('Git payload', (r.stderr || '').trim());
-} else {
-  warn('Git', 'esta carpeta no es un clone de git (¿descargaste el ZIP?)');
+try {
+  const pag = JSON.parse(readFileSync(join(repo, 'design', 'paginas.json'), 'utf8'));
+  ok('Páginas obligatorias', `${pag.pages.length} definidas en design/paginas.json`);
+} catch (e) {
+  fail('Páginas obligatorias', e.message);
 }
 
-// 5. Calentar WordPress Playground
+// 4. MCP obligatorios (Figma + Playwright)
+try {
+  const mcp = JSON.parse(readFileSync(join(repo, '.mcp.json'), 'utf8')).mcpServers || {};
+  for (const name of ['figma', 'playwright']) {
+    mcp[name] ? ok(`MCP ${name}`, 'declarado en .mcp.json (Claude Code pide aprobarlo al abrir el repo)') : fail(`MCP ${name}`, 'falta en .mcp.json');
+  }
+} catch (e) {
+  fail('MCP', `.mcp.json ilegible: ${e.message}`);
+}
+if (!existsSync(join(repo, '.git'))) warn('Git', 'esta carpeta no es un clone de git (¿descargaste el ZIP?)');
+
+// 5. Calentar descargas (WordPress Playground y Playwright MCP)
 if (flags.has('--warm')) {
   const r = run('npx', ['-y', '@wp-playground/cli@latest', '--version'], { cwd: repo, timeout: 300000 });
   r.status === 0 ? ok('WP Playground CLI', (r.stdout || '').trim().split('\n').pop() || 'descargado') : warn('WP Playground CLI', 'no se pudo descargar ahora; se intentará al primer preview');
+  const p = run('npx', ['-y', '@playwright/mcp@latest', '--help'], { cwd: repo, timeout: 300000 });
+  p.status === 0 ? ok('Playwright MCP', 'paquete descargado') : warn('Playwright MCP', 'no se pudo descargar ahora; se intentará al abrir el MCP');
 }
 
 // Resumen

@@ -53,6 +53,11 @@
         "type": "object",
         "required": ["title", "slug"],
         "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["inicio", "cursos", "nosotros", "blog", "contacto", "privacidad", "terminos", "reembolsos", "cookies", "aviso-legal", "faq", "carrito", "checkout"],
+            "description": "Página obligatoria que representa (design/paginas.json). Las 13 son obligatorias en todo proyecto. carrito/checkout/cursos reciben su shortcode si la plantilla no lo trae."
+          },
           "title": { "type": "string" },
           "slug": { "type": "string" },
           "template": {
@@ -89,6 +94,56 @@
           "slug": { "type": "string" },
           "header_template": { "type": "string" },
           "footer_template": { "type": "string" }
+        }
+      }
+    },
+    "commerce": {
+      "type": "object",
+      "properties": {
+        "engine": {
+          "type": "string",
+          "enum": ["woocommerce", "tutor"],
+          "default": "woocommerce",
+          "description": "Quién gestiona carrito y pasarela: WooCommerce (Tutor monetiza con WC) o el eCommerce nativo de Tutor LMS."
+        },
+        "currency": { "type": "string", "description": "ISO 4217, ej. USD, EUR, COP, MXN" },
+        "gateways": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Pasarelas del brief (stripe, paypal, mercadopago, wompi…). Informativo: se configuran en WooCommerce/Tutor con las credenciales del cliente."
+        }
+      }
+    },
+    "course_template": {
+      "type": ["string", "null"],
+      "description": "Plantilla Elementor 'single' (templates/) de la landing de curso individual de Tutor LMS. Con Pro se aplica a todos los cursos."
+    },
+    "courses": {
+      "type": "array",
+      "description": "Cursos demo de Tutor LMS (mínimo 1) para revisar la landing tras instalar.",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string" },
+          "slug": { "type": "string" },
+          "excerpt": { "type": "string" },
+          "content": { "type": "string", "description": "HTML de la descripción" },
+          "image": { "type": "string", "description": "Filename en media/" },
+          "price": { "type": "number", "description": "0 o ausente = gratis" },
+          "sale_price": { "type": "number" },
+          "level": { "type": "string", "enum": ["beginner", "intermediate", "expert", "all_levels"] },
+          "duration": { "type": "string" },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "lessons": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
         }
       }
     },

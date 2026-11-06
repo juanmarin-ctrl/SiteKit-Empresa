@@ -23,6 +23,7 @@ Mueve y normaliza lo de brief/entrada/ al proyecto proyectos/<slug>/
 | `03-oferta.md` | Plan de estudios, servicios, catálogo |
 | `04-branding.md` | Manual, estilos globales, colores |
 | `05-imagenes.md` | Inventario + carpeta `imagenes/` |
+| `06-legal-y-pagos.md` | Razón social, ID fiscal, pasarelas, moneda, reembolsos, cookies, cursos |
 | `imagenes/` | Logos y fotos |
 
 Las plantillas vacías están en `brief/plantillas/`.

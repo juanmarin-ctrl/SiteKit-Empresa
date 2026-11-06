@@ -13,9 +13,11 @@ alwaysApply: false
 
 Cuando el usuario pida generar o reestructurar una web de cliente:
 
-1. Leer `CLAUDE.md`, `AGENTS.md`, `design/anti-template.md`, `prompts/PIPELINE.md`.
+1. Leer `CLAUDE.md`, `AGENTS.md`, `design/anti-template.md`, `design/paginas-obligatorias.md`, `prompts/PIPELINE.md`.
 2. Trabajar por proyecto en `proyectos/<slug>/`.
-3. No reutilizar visualmente otros proyectos ni payloads de otros clientes.
-4. El motor PHP `engine/site-maestro` es genérico: solo rellenar `payload/`.
-5. En la fase de diseño, leer y aplicar `.claude/skills/design-taste-frontend/SKILL.md` y `.claude/skills/impeccable/SKILL.md`.
-6. Antes de entregar, completar el test de unicidad de `AGENTS.md`.
+3. Crear SIEMPRE las 14 páginas obligatorias, acordes al branding e información del brief.
+4. Preview HTML de las 14 páginas primero; nada de payload/ZIP hasta que el usuario apruebe (`aprobacion.md` → APROBADO).
+5. No reutilizar visualmente otros proyectos ni payloads de otros clientes.
+6. El motor PHP `engine/site-maestro` es genérico: solo rellenar `proyectos/<slug>/payload/`.
+7. En diseño, leer y aplicar `.claude/skills/{design-taste-frontend,emil-design-eng,impeccable}/SKILL.md`; en WordPress, `.claude/skills/wordpress-elementor/SKILL.md`.
+8. Antes de pedir luz verde, `node tools/validate.mjs <slug> --etapa mockup` y el test de unicidad de `AGENTS.md`.

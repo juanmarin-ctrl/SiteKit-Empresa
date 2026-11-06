@@ -13,29 +13,32 @@ Este archivo sirve para dos cosas:
 |-----------|----------|-------|
 | **Claude Code** | Ejecutar el kit (app de escritorio de Claude → pestaña *Code*, CLI `claude`, o extensión VS Code/JetBrains) | claude.com/claude-code |
 | **Git** | Clonar y actualizar el kit | git-scm.com |
-| **Node.js 18+** (incluye npm/npx) | Previews de mockups, WordPress Playground, scripts de las skills, empaquetado | nodejs.org (versión LTS) |
-| Navegador Chrome/Edge | Inspección visual de la skill `design-taste-frontend` y Playwright MCP | — |
+| **Node.js 18+** (incluye npm/npx) | Previews, WordPress Playground, scripts de las skills, MCP de Playwright, empaquetado | nodejs.org (LTS) |
+| **Google Chrome** | Playwright MCP y la inspección de `design-taste-frontend` | google.com/chrome |
+| **Cuenta de Figma** | Figma MCP (leer diseños/referencias del cliente) | figma.com |
 
-Opcional: cuenta de **Figma** (si se usa el MCP de Figma) y licencia **Elementor Pro** en el WordPress del cliente.
+En el WordPress del cliente: Hello Elementor, Elementor (Pro recomendado para cabecera/pie y landing de curso), WooCommerce y Tutor LMS.
 
-## Qué incluye el repo (no hay que instalarlo aparte)
+## Qué incluye el repo (obligatorio, no se instala aparte)
 
 | Pieza | Ubicación | Cómo se activa |
 |-------|-----------|----------------|
 | Instrucciones del agente | `CLAUDE.md`, `AGENTS.md`, `.claude/instructions.md`, `.cursor/rules/` | Automático al abrir la carpeta |
-| Skill `design-taste-frontend` (dirección de arte) | `.claude/skills/design-taste-frontend/` | Automático en Claude Code (skill de proyecto) |
-| Skill `impeccable` v4.8 (pulido/auditoría, Apache 2.0) | `.claude/skills/impeccable/` | Automático en Claude Code (skill de proyecto) |
-| Servidores de preview | `.claude/launch.json` → `mockups` (4173), `wp-playground` (9400) | Claude los arranca cuando hace falta |
-| MCP opcionales | `.mcp.json` → `playwright`, `figma` | Claude Code pide aprobarlos la primera vez |
-| Motor WordPress | `engine/site-maestro/` | Se empaqueta con `node tools/package.mjs <slug>` |
+| Skill **Emil Kowalski** `emil-design-eng` | `.claude/skills/emil-design-eng/` | Automático (skill de proyecto) |
+| Skill **Impeccable** `impeccable` v4.8 | `.claude/skills/impeccable/` | Automático |
+| Skill **Taste** `design-taste-frontend` | `.claude/skills/design-taste-frontend/` | Automático |
+| Skills **WordPress Elementor** `wordpress-elementor`, `wordpress-setup`, `wordpress-content` | `.claude/skills/wordpress-*/` | Automático |
+| **Figma MCP** + **Playwright MCP** | `.mcp.json` | Claude Code pide aprobarlos al abrir el repo |
+| Servidores | `.claude/launch.json` → `previews` (4173), `wp-playground` (9400) | Claude los arranca cuando hace falta |
+| Motor WordPress | `engine/site-maestro/` | `node tools/package.mjs <slug>` |
 
 ---
 
 ## Procedimiento para Claude
 
-Ejecuta en orden, desde la raíz del repo. No pidas confirmación para los pasos de solo lectura/verificación; sí antes de instalar software en el sistema.
+Ejecuta en orden, desde la raíz del repo. No pidas confirmación para los pasos de verificación; sí antes de instalar software en el sistema.
 
-1. **Comprobar que estás en la raíz del kit**: deben existir `CLAUDE.md`, `engine/site-maestro/site-maestro.php` y `.claude/skills/`.
+1. **Comprobar que estás en la raíz del kit**: deben existir `CLAUDE.md`, `engine/site-maestro/site-maestro.php`, `.claude/skills/` y `.mcp.json`.
 
 2. **Ejecutar la verificación**:
 
@@ -43,25 +46,26 @@ Ejecuta en orden, desde la raíz del repo. No pidas confirmación para los pasos
    node tools/setup.mjs --warm
    ```
 
-   - Si `node` no existe → dile al usuario que instale Node.js LTS desde nodejs.org (en Windows también vale `winget install OpenJS.NodeJS.LTS`; en macOS `brew install node`), que reinicie Claude Code y vuelva a pegar el prompt. No sigas.
-   - Si falla Git → igual, `winget install Git.Git` / `brew install git`.
+   - Si `node` no existe → dile al usuario que instale Node.js LTS (Windows: `winget install OpenJS.NodeJS.LTS`; macOS: `brew install node`), que reinicie Claude Code y vuelva a pegar el prompt. No sigas.
+   - Si falla Git → `winget install Git.Git` / `brew install git`.
    - Cualquier `✘` → explícalo y para. Los `⚠` se reportan pero no bloquean.
 
-3. **Confirmar que las skills están cargadas**: comprueba que `design-taste-frontend` e `impeccable` aparecen entre tus skills disponibles. Si no aparecen (sesión abierta antes de clonar, u otro entorno):
-   - pide al usuario que cierre y vuelva a abrir la sesión en la carpeta del repo, **o**
-   - si quiere tenerlas en todos sus proyectos, ejecuta `node tools/setup.mjs --global-skills` (las copia a `~/.claude/skills` sin sobrescribir).
+3. **Skills (6 obligatorias)**: comprueba que `design-taste-frontend`, `emil-design-eng`, `impeccable`, `wordpress-elementor`, `wordpress-setup` y `wordpress-content` aparecen entre tus skills disponibles. Si no:
+   - pide al usuario que cierre y vuelva a abrir la sesión con la raíz del repo como carpeta, **o**
+   - `node tools/setup.mjs --global-skills` (las copia a `~/.claude/skills` sin sobrescribir).
 
-4. **Probar el servidor de mockups**: arranca el servidor `mockups` de `.claude/launch.json` (o `node tools/serve.mjs`), comprueba que `http://localhost:4173` responde con la página "Mockups" y detenlo.
+4. **MCP (obligatorios)**: comprueba si tienes herramientas de `playwright` y `figma`.
+   - Si no aparecen: pide al usuario que apruebe los servidores de `.mcp.json` (Claude Code lo pregunta al abrir el repo; en la CLI también con `/mcp`) y reinicie la sesión.
+   - **Figma** requiere iniciar sesión en Figma la primera vez (OAuth desde Claude Code).
+   - **Playwright**: prueba abrir `http://localhost:4173` en el paso 5. Si falla por navegador, ejecuta `npx playwright install chrome`.
 
-5. **(Opcional, pregunta antes) Probar WordPress Playground**: arranca `wp-playground` (o `node tools/playground.mjs`). La primera vez descarga WordPress, Hello Elementor y Elementor (1–3 min). Comprueba que `http://localhost:9400` abre el menú **Site Maestro**. Detenlo al terminar.
+5. **Probar el servidor de previews**: arranca `previews` de `.claude/launch.json` (o `node tools/serve.mjs`) y comprueba que `http://localhost:4173` responde con “Previews de proyectos”. Si Playwright MCP está activo, ábrelo con él. Detenlo.
 
-6. **MCP opcionales**: recuerda al usuario que al abrir el repo Claude Code le preguntará si aprueba los servidores de `.mcp.json`:
-   - `playwright` — recomendado (navegador automatizado para revisar mockups).
-   - `figma` — solo si trabajan desde diseños de Figma (pide iniciar sesión en Figma).
+6. **(Opcional, pregunta antes) Probar WordPress Playground**: `node tools/playground.mjs` (en segundo plano). La primera vez descarga WordPress, Elementor, WooCommerce y Tutor LMS (2–4 min). Comprueba que `http://localhost:9400/wp-admin/admin.php?page=site-maestro` muestra **Site Maestro v1.5.0**. Detenlo.
 
-7. **Resumen final** al usuario, en una tabla corta: requisito → estado, skills → estado, previews → estado, y el siguiente paso:
+7. **Resumen final** en una tabla corta: requisitos → estado, 6 skills → estado, 2 MCP → estado, previews → estado, y el siguiente paso:
 
-   > Para crear una web: copia tus documentos y pega el prompt de **README.md → "Crear la web de un cliente"**.
+   > Para crear una web: pon los documentos del cliente y pega el prompt de **README.md → "Crear la web de un cliente"**.
 
 ---
 
@@ -78,8 +82,11 @@ Las mejoras del motor, del pipeline y de las skills llegan con `git pull`. Tus p
 
 | Síntoma | Solución |
 |---------|----------|
-| Claude no ve las skills | Abre la sesión con la **raíz del repo** como carpeta de trabajo; o `node tools/setup.mjs --global-skills` |
-| `npx` tarda mucho la primera vez | Normal: descarga WordPress Playground. `node tools/setup.mjs --warm` lo adelanta |
-| Puerto 4173/9400 ocupado | `node tools/serve.mjs 4180` / `node tools/playground.mjs 9500` |
-| El ZIP no instala en el hosting | Genera el ZIP con `node tools/package.mjs <slug>` (no con "Enviar a carpeta comprimida" ni `Compress-Archive`) |
-| Funciones de idioma (`language_chrome`) no hacen nada | Requieren el plugin interno Teducas Core ≥ 1.17 en el WordPress (no incluido). Para probarlo en local, copia `TeducasCore/` a la raíz del repo: el playground lo monta solo |
+| Claude no ve las skills | Abre la sesión con la **raíz del repo** como carpeta; o `node tools/setup.mjs --global-skills` |
+| No aparecen las herramientas de Playwright/Figma | Aprueba los MCP de `.mcp.json` y reinicia la sesión |
+| Playwright no abre el navegador | `npx playwright install chrome` |
+| `npx` tarda mucho la primera vez | Normal: descarga WordPress Playground / Playwright. `node tools/setup.mjs --warm` lo adelanta |
+| Puerto 4173/9400 ocupado | `node tools/serve.mjs 4180` / `node tools/playground.mjs <slug> 9500` |
+| `package.mjs` dice “no está APROBADO” | Revisa el preview y da la luz verde en el chat; Claude actualiza `aprobacion.md` |
+| El ZIP no instala en el hosting | Genera el ZIP con `node tools/package.mjs <slug>` (no con “Enviar a carpeta comprimida” ni `Compress-Archive`) |
+| Funciones de idioma (`language_chrome`) no hacen nada | Requieren el plugin interno Teducas Core ≥ 1.17 (no incluido). Para probarlo en local, copia `TeducasCore/` a la raíz del repo |

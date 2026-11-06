@@ -7,10 +7,8 @@ proyectos/*/
 brief/entrada/*
 !brief/entrada/.gitkeep
 
-# Payload activo del motor: se versiona solo el placeholder.
-# Para evitar subir por error el payload de un cliente, después del primer clone ejecuta:
-#   git update-index --skip-worktree engine/site-maestro/payload/site.json engine/site-maestro/payload/branding.css engine/site-maestro/payload/frontend.js engine/site-maestro/payload/README.md
-# (tools/setup.mjs lo hace por ti)
+# Payload del motor = placeholder de referencia. El payload real de cada cliente vive en
+# proyectos/<slug>/payload/ y tools/package.mjs lo ensambla en el ZIP (no se copia aquí).
 engine/site-maestro/payload/media/brand/*
 engine/site-maestro/payload/media/stock/*
 engine/site-maestro/payload/templates/*

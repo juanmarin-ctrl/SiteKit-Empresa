@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Site Maestro
  * Description: Instalador genérico TEDUCAS. Lee payload/ (site.json + media + templates Elementor + CSS/JS) e instala el sitio con un clic. El diseño lo genera la IA por cliente; este plugin solo importa.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: TEDUCAS
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-define('SM_VERSION', '1.4.0');
+define('SM_VERSION', '1.5.0');
 define('SM_PATH', plugin_dir_path(__FILE__));
 define('SM_URL', plugin_dir_url(__FILE__));
 define('SM_PAYLOAD', SM_PATH . 'payload/');

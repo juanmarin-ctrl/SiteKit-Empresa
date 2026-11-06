@@ -1,0 +1,25 @@
+{
+  "$comment": "Fuente única de las páginas OBLIGATORIAS de cada proyecto. La usan tools/validate.mjs, tools/serve.mjs y el pipeline. No quitar entradas.",
+  "groups": [
+    { "id": "navegacion", "label": "Navegación" },
+    { "id": "legal", "label": "Legal & Documentación" },
+    { "id": "facturacion", "label": "Facturación" },
+    { "id": "cursos", "label": "Cursos" }
+  ],
+  "pages": [
+    { "role": "inicio",      "group": "navegacion",  "title": "Inicio",                    "slug": "inicio",                   "mockup": "index.html",       "menu": "primary", "wp": "is_front" },
+    { "role": "cursos",      "group": "navegacion",  "title": "Cursos",                    "slug": "cursos",                   "mockup": "cursos.html",      "menu": "primary", "wp": "catálogo Tutor LMS (shortcode [tutor_course])" },
+    { "role": "nosotros",    "group": "navegacion",  "title": "Sobre nosotros",            "slug": "sobre-nosotros",           "mockup": "nosotros.html",    "menu": "primary" },
+    { "role": "blog",        "group": "navegacion",  "title": "Blog",                      "slug": "blog",                     "mockup": "blog.html",        "menu": "primary", "wp": "is_blog (página de entradas)" },
+    { "role": "contacto",    "group": "navegacion",  "title": "Contáctame",                "slug": "contacto",                 "mockup": "contacto.html",    "menu": "primary", "wp": "formulario sm_contact o Elementor Pro Form" },
+    { "role": "privacidad",  "group": "legal",       "title": "Política de privacidad",    "slug": "politica-de-privacidad",   "mockup": "privacidad.html",  "menu": "legal",   "wp": "wp_page_for_privacy_policy" },
+    { "role": "terminos",    "group": "legal",       "title": "Términos y condiciones",    "slug": "terminos-y-condiciones",   "mockup": "terminos.html",    "menu": "legal",   "wp": "woocommerce_terms_page_id" },
+    { "role": "reembolsos",  "group": "legal",       "title": "Política de reembolsos",    "slug": "politica-de-reembolsos",   "mockup": "reembolsos.html",  "menu": "legal" },
+    { "role": "cookies",     "group": "legal",       "title": "Política de cookies",       "slug": "politica-de-cookies",      "mockup": "cookies.html",     "menu": "legal" },
+    { "role": "aviso-legal", "group": "legal",       "title": "Aviso legal",               "slug": "aviso-legal",              "mockup": "aviso-legal.html", "menu": "legal" },
+    { "role": "faq",         "group": "legal",       "title": "Preguntas frecuentes",      "slug": "preguntas-frecuentes",     "mockup": "faq.html",         "menu": "legal" },
+    { "role": "carrito",     "group": "facturacion", "title": "Carrito",                   "slug": "carrito",                  "mockup": "carrito.html",     "wp": "WooCommerce cart ([woocommerce_cart]) o Tutor [tutor_cart]" },
+    { "role": "checkout",    "group": "facturacion", "title": "Pasarela de pagos",         "slug": "finalizar-compra",         "mockup": "checkout.html",    "wp": "WooCommerce checkout ([woocommerce_checkout]) o Tutor [tutor_checkout]" },
+    { "role": "curso",       "group": "cursos",      "title": "Landing de curso (Tutor LMS)", "slug": null,                    "mockup": "curso.html",       "wp": "plantilla single de Tutor LMS (course_template) — no es una página" }
+  ]
+}
