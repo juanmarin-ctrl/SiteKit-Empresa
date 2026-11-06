@@ -12,7 +12,7 @@ Claude **diseña, desarrolla y revisa**: dirección de arte con skills de diseñ
 2. Clona el repo:
 
    ```bash
-   git clone <URL-DE-ESTE-REPO> SiteKit
+   git clone https://github.com/juanmarin-ctrl/SiteKit-Empresa.git SiteKit
    ```
 
 3. Abre la carpeta `SiteKit` en Claude Code y pega:
